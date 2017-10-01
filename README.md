@@ -3,6 +3,9 @@
 I am writing this Mail server with Two major focuses.
 Security And Redundancy.
 
+Keep closer track of my progress on Trello.
+https://trello.com/b/L36LhDal/dragon-mail
+
 # Security
 E-Mail is a very old technology, and too many people take it for granted,
 esecpially since they never consider all the verification, bank statement, password reset,

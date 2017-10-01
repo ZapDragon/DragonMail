@@ -6,16 +6,7 @@ using System.Threading.Tasks;
 
 namespace DragonMail
 {
-    class MainClass
+    class ImapServices
     {
-        static void Main(string[] args)
-        {
-
-
-
-
-
-
-        }
     }
 }

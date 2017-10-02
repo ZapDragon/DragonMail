@@ -20,12 +20,15 @@ namespace DragonMail
         //Local Global Strings
         public static string[] ServerCFG;
 
+        //Local Static ints
+        public static long MaxEmailSize = 268435458;
+
         public static string PrimaryDomain, MailBoxPath, ListenIP;
         public static List<int> Listeners = new List<int>();
 
         static void Main()
         {
-            Console.Write("DragonMail Server written By Xylex Rayne 2017\r\n\r\nLoading Local config...");
+            Console.WriteLine("DragonMail Server written By Xylex Rayne 2017" + Environment.NewLine + " Loading Local config...");
 
             //Method used when local cfg file is missing.
             LoadDefaults();
@@ -49,5 +52,8 @@ namespace DragonMail
             Listeners.Add(587);
             Console.WriteLine("Local config not found. Defaults loaded.");
         }
+
+        public static int Epoch() { return (Int32)(DateTime.UtcNow.Subtract(new DateTime(1970, 1, 1))).TotalSeconds; }
+
     }
 }

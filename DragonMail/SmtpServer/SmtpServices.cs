@@ -12,6 +12,10 @@ namespace DragonMail
     {
         public static List<SmtpServer> SmtpServers = new List<SmtpServer>();
         public static Dictionary<TcpClient, SmtpClient> SmtpClients = new Dictionary<TcpClient, SmtpClient>();
+        public static List<TcpClient> Garbage = new List<TcpClient>();
+        public static ulong CurrentTransactionID;
+
+        public static long MaxEmailSize = 268435458;
 
         public static void SmtpMain()
         {
@@ -26,17 +30,37 @@ namespace DragonMail
             // Begining Main service loop.
             while (true)
             {
-                
+
+                if (Garbage.Count > 0)
+                {
+                    foreach (TcpClient trash in Garbage)
+                    {
+                        SmtpClients.Remove(trash);
+                    }
+                    Garbage.Clear();
+                }
                 // Check Each SmtpServer object Listener for new connections and accept them.
                 foreach (SmtpServer Listener in SmtpServers)
                 {
                     if (Listener.SmtpListener.Pending()) { newSmtpClient(Listener.SmtpListener.AcceptTcpClient()); }
                 }
 
+                // Check Each SmtpClient object's Tcpobject for new incming data from clients and handle them.
+                foreach (var KeyValue in SmtpClients)
+                {
+                    if (KeyValue.Key.Available > 0) { SmtpTransactions.PacketParser(KeyValue.Value); }
+                    if (MainClass.Epoch() - 600 > KeyValue.Value.LastActiveEpoch) {
+                        KeyValue.Key.Close();
+                        Garbage.Add(KeyValue.Key);
+                    }
+                }
+
             }
 
 
         }
+
+        public static ulong GetTransactionID() { return CurrentTransactionID++; }
 
         public static void newSmtpClient(TcpClient client)
         {
@@ -57,6 +81,7 @@ namespace DragonMail
             await client.GetStream().WriteAsync(packet, 0, packet.Length);
         }
 
+        
 
 
     }
@@ -74,12 +99,21 @@ namespace DragonMail
 
     public class SmtpClient
     {
+
         public TcpClient TcpClient;
-        public string ConnectingIP;
+        public List<string> ToAddress = new List<string>();
+        public List<string> ToDomain = new List<string>();
+        public string ConnectingIP, FromAddress, FromDomain, ServiceDomain;
         public string CurrentMode;
+        public byte[] payLoad;
+        public byte[] payLoadBuffer = new byte[SmtpServices.MaxEmailSize];
+        public long payloadSize = 0;
+        public int LastActiveEpoch = MainClass.Epoch();
+        public ulong TransactionID;
         public SmtpClient(TcpClient client)
         {
             TcpClient = client;
+            TransactionID = SmtpServices.GetTransactionID();
             Console.WriteLine("New Smtp Client.");
         }
     }

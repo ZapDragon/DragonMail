@@ -44,7 +44,9 @@
     <Compile Include="ImapServer\ImapServices.cs" />
     <Compile Include="MainClass.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="SmtpServer\MailHandler.cs" />
     <Compile Include="SmtpServer\SmtpServices.cs" />
+    <Compile Include="SmtpServer\SmtpTransactions.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />

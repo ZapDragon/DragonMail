@@ -10,7 +10,7 @@ namespace DragonMail
     class MailHandler
     {
         public static List<string> LocalMailBoxes = new List<string>();
-        public static async Task DeliverMail(SmtpClient SmtpObject)
+        public static void DeliverMail(SmtpClient SmtpObject)
         {
                 foreach (string address in SmtpObject.ToAddress)
                 {
@@ -21,36 +21,32 @@ namespace DragonMail
                 }
 
 
-            if (!Directory.Exists(MainClass.MailBoxPath))
-            {
-                try { Directory.CreateDirectory(MainClass.MailBoxPath); }
-                catch {
-                    Console.WriteLine("MailBox directory doesnt exist, and Could Not be created. Pending mail will be lost. SHutting down mail server.");
-                    Console.ReadKey();
-                    Environment.Exit(-1);
-                }
-                try { 
-                    foreach (string Mailbox in LocalMailBoxes) {
-                        Directory.CreateDirectory(MainClass.MailBoxPath + Mailbox);
-                    }
-                }
-                catch { return; }
+                if (!Directory.Exists(MainClass.MailBoxPath))
+                {
 
-                try {
-                    foreach (string Mailbox in LocalMailBoxes)
+                        Console.WriteLine("MailBox directory doesnt exist. Pending mail will be lost. Shutting down mail server.");
+                        Console.ReadKey();
+                        Environment.Exit(-1);
+                    }
+                
+                else
+                {
+                    try
                     {
-                        File.Create(MainClass.MailBoxPath + Mailbox + "\\" + MainClass.Epoch() + "." + SmtpObject.TransactionID + "_eml" );
-                        File.WriteAllBytes(MainClass.MailBoxPath + Mailbox + "\\" + MainClass.Epoch() + "." + SmtpObject.TransactionID + "_eml", SmtpObject.payLoad);
+                        foreach (string Mailbox in LocalMailBoxes)
+                        {
+                            File.WriteAllBytes(MainClass.MailBoxPath + Mailbox + "\\" + MainClass.Epoch() + "." + SmtpObject.TransactionID + "_eml", SmtpObject.payLoad);
+                        }
                     }
+                    catch { Console.WriteLine("Mailbox delivery error"); }
+                    LocalMailBoxes.Clear();
+                    SmtpObject.ToAddress.Clear();
+                    SmtpObject.ToDomain.Clear();
+                    SmtpObject.FromAddress = "";
+                    SmtpObject.FromDomain = "";
+                    SmtpObject.CurrentMode = "Completed Delivery";
+                    Array.Clear(SmtpObject.payLoad, 0, SmtpObject.payLoad.Length);
                 }
-                catch { return; }
-                SmtpObject.ToAddress.Clear();
-                SmtpObject.ToDomain.Clear();
-                SmtpObject.FromAddress = "";
-                SmtpObject.FromDomain = "";
-                Array.Clear(SmtpObject.payLoad, 0, SmtpObject.payLoad.Length);
-            }
-
         }
     }
 }

@@ -48,16 +48,35 @@ namespace DragonMail
                 // Check Each SmtpClient object's Tcpobject for new incming data from clients and handle them.
                 foreach (var KeyValue in SmtpClients)
                 {
-                    if (KeyValue.Key.Available > 0) { SmtpTransactions.PacketParser(KeyValue.Value); }
+                    if (KeyValue.Key.Available > 0) {
+                        //Update client's activity time.
+                        KeyValue.Value.LastActiveEpoch = MainClass.Epoch();
+
+                        if (KeyValue.Value.CurrentMode == "Payload")
+                        {
+                            
+                            SmtpTransactions.PayloadBuilder(KeyValue.Value);
+                            continue;
+                        }
+                        else
+                        {
+                            if (KeyValue.Key.Available < 4) { continue;  }
+                            byte[] data = new byte[KeyValue.Key.Available];
+                            KeyValue.Key.GetStream().Read(data, 0, data.Length);
+
+                            string packet = Encoding.UTF8.GetString(data, 0, data.Length).Replace("\n", "").Replace("\r", "");
+                            Console.WriteLine(packet);
+                            SmtpTransactions.PacketParser(KeyValue.Value, packet.Split(' '));
+                            if (KeyValue.Value.CurrentMode == "Payload") { continue; }
+                        }
+                    }
                     if (MainClass.Epoch() - 600 > KeyValue.Value.LastActiveEpoch) {
+                        Task.Factory.StartNew(() => Write(KeyValue.Key, "421 4.4.2 " + MainClass.PrimaryDomain + " Error: timeout exceeded\r\n"));
                         KeyValue.Key.Close();
                         Garbage.Add(KeyValue.Key);
                     }
                 }
-
             }
-
-
         }
 
         public static ulong GetTransactionID() { return CurrentTransactionID++; }

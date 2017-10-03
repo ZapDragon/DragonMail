@@ -19,6 +19,8 @@ namespace DragonMail
 
         //Local Global Strings
         public static string[] ServerCFG;
+        public static List<string> LocalMailBoxes = new List<string>();
+
 
         //Local Static ints
         public static long MaxEmailSize = 268435458;
@@ -28,11 +30,22 @@ namespace DragonMail
 
         static void Main()
         {
+            LocalMailBoxes.Add("abuse");
+            LocalMailBoxes.Add("amazon");
+            LocalMailBoxes.Add("hostmaster");
+            LocalMailBoxes.Add("paypal");
+            LocalMailBoxes.Add("postmaster");
+            LocalMailBoxes.Add("webmaster");
+            LocalMailBoxes.Add("xylexrayne");
+
+
+
             Console.WriteLine("DragonMail Server written By Xylex Rayne 2017" + Environment.NewLine + " Loading Local config...");
 
             //Method used when local cfg file is missing.
             LoadDefaults();
 
+            PrimeDirectories();
 
 
             // Start Services
@@ -45,15 +58,43 @@ namespace DragonMail
         }
         static void LoadDefaults()
         {
-            PrimaryDomain = "dragonstripes.net";
-            MailBoxPath = "C:\\Mailboxes\\";
-            ListenIP = "10.0.0.70";
+            //PrimaryDomain = ""; // Single Domain only. For now the server can only accept mail addressed to mailboxes at this domain.
+            //MailBoxPath = ""; //Any Absolute Localized path. D:\\Mailboxes\\ or /var/mailboxes/ Trailing slash is a must.
+            //ListenIP = ""; A single IPv4 address to listen on.
             Listeners.Add(25);
-            Listeners.Add(587);
-            Console.WriteLine("Local config not found. Defaults loaded.");
+            //Listeners.Add(587);
+            Console.WriteLine("Local config not found. Defaults loaded.\r\n");
         }
 
+        static void PrimeDirectories()
+        {
+            if (!Directory.Exists(MailBoxPath))
+            {
+                try { Directory.CreateDirectory(MailBoxPath); }
+                catch
+                {
+                    Console.WriteLine("MailBox directory doesnt exist, and Could Not be created. Shutting down mail server.");
+                    Console.ReadKey();
+                    Environment.Exit(-1);
+                }
+            }
+
+            foreach (string Mailbox in LocalMailBoxes)
+            {
+               if (!Directory.Exists(MailBoxPath + Mailbox)) {
+                    try { Directory.CreateDirectory(MainClass.MailBoxPath + Mailbox); }
+                    catch {
+                        Console.WriteLine("Unable to create local Mailbox for " + Mailbox + ". Shutting down.");
+
+                    }
+                    }
+                }
+                
+            }
+
+    
         public static int Epoch() { return (Int32)(DateTime.UtcNow.Subtract(new DateTime(1970, 1, 1))).TotalSeconds; }
+        }
 
     }
-}
+

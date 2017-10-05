@@ -35,6 +35,7 @@ namespace DragonMail
                 {
                     foreach (TcpClient trash in Garbage)
                     {
+                        if (trash.Connected) { trash.Close(); }
                         SmtpClients.Remove(trash);
                     }
                     Garbage.Clear();
@@ -66,13 +67,14 @@ namespace DragonMail
 
                             string packet = Encoding.UTF8.GetString(data, 0, data.Length).Replace("\n", "").Replace("\r", "");
                             Console.WriteLine(packet);
-                            SmtpTransactions.PacketParser(KeyValue.Value, packet.Split(' '));
                             if (KeyValue.Value.CurrentMode == "Payload") { continue; }
+                            SmtpTransactions.PacketParser(KeyValue.Value, packet);
                         }
                     }
                     if (MainClass.Epoch() - 600 > KeyValue.Value.LastActiveEpoch) {
                         Task.Factory.StartNew(() => Write(KeyValue.Key, "421 4.4.2 " + MainClass.PrimaryDomain + " Error: timeout exceeded\r\n"));
                         KeyValue.Key.Close();
+                        Console.WriteLine("Closed Connection: " + KeyValue.Value.ConnectingIP);
                         Garbage.Add(KeyValue.Key);
                     }
                 }
@@ -84,25 +86,22 @@ namespace DragonMail
         public static void newSmtpClient(TcpClient client)
         {
             string address = ((IPEndPoint)client.Client.RemoteEndPoint).Address.ToString();
-
             SmtpClient clientObject = new SmtpClient(client);
             SmtpClients.Add(client, clientObject);
-
+            clientObject.InitiatedEpoch = MainClass.Epoch();
+            clientObject.LastActiveEpoch = clientObject.InitiatedEpoch;
             clientObject.ConnectingIP = address;
-            clientObject.CurrentMode = "Login";
+            Console.WriteLine("New Smtp Client: " + address);
             Task.Factory.StartNew(() => Write(client, "220 " + MainClass.PrimaryDomain + Environment.NewLine));
         }
 
 
         public static async Task Write(TcpClient client, string Data)
         {
+            Console.WriteLine(Data);
             byte[] packet = Encoding.UTF8.GetBytes(Data);
             await client.GetStream().WriteAsync(packet, 0, packet.Length);
         }
-
-        
-
-
     }
 
     public class SmtpServer
@@ -128,12 +127,12 @@ namespace DragonMail
         public byte[] payLoadBuffer = new byte[SmtpServices.MaxEmailSize];
         public long payloadSize = 0;
         public int LastActiveEpoch = MainClass.Epoch();
+        public int InitiatedEpoch = MainClass.Epoch();
         public ulong TransactionID;
         public SmtpClient(TcpClient client)
         {
             TcpClient = client;
             TransactionID = SmtpServices.GetTransactionID();
-            Console.WriteLine("New Smtp Client.");
         }
     }
 }

@@ -42,9 +42,10 @@ namespace DragonMail
                     LocalMailBoxes.Clear();
                     SmtpObject.ToAddress.Clear();
                     SmtpObject.ToDomain.Clear();
-                    SmtpObject.FromAddress = "";
-                    SmtpObject.FromDomain = "";
+                    SmtpObject.FromAddress = null;
+                    SmtpObject.FromDomain = null;
                     SmtpObject.CurrentMode = "Completed Delivery";
+                    SmtpObject.payloadSize = 0;
                     Array.Clear(SmtpObject.payLoad, 0, SmtpObject.payLoad.Length);
                 }
         }
